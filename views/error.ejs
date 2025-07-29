@@ -1,0 +1,29 @@
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-body text-center p-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <h2 class="text-danger"><%= title %></h2>
+                <p class="lead"><%= message %></p>
+                
+                <% if (error && error.stack && process.env.NODE_ENV === 'development') { %>
+                    <div class="mt-4">
+                        <details class="text-start">
+                            <summary class="btn btn-outline-secondary btn-sm">Chi tiết lỗi (Development)</summary>
+                            <pre class="mt-3 p-3 bg-light border rounded"><%= error.stack %></pre>
+                        </details>
+                    </div>
+                <% } %>
+                
+                <div class="mt-4">
+                    <a href="/" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Về trang chủ
+                    </a>
+                    <button class="btn btn-outline-secondary ms-2" onclick="history.back()">
+                        <i class="fas fa-arrow-left me-2"></i>Quay lại
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

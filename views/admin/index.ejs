@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin Dashboard - Email Checker System">
+    <meta name="keywords" content="admin, dashboard, email management">
+    <meta name="author" content="Email Checker System">
+    <title>Admin Dashboard - Email Checker System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    
+    <style>
+        /* Admin-specific styles */
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .table th {
+            background: #f8f9ff;
+            border: none;
+            color: #495057;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+        }
+        
+        .table td {
+            border: none;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+        
+        .table tbody tr {
+            border-bottom: 1px solid #f1f3f4;
+            transition: background-color 0.2s ease;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #f8f9ff;
+        }
+        
+        .status-badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-used {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .status-unused {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .email-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            background: #f8f9ff;
+            padding: 0.375rem 0.75rem;
+            border-radius: 8px;
+            color: #495057;
+        }
+        
+        .btn-action {
+            padding: 0.375rem 0.75rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-delete {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .btn-delete:hover {
+            background: #fecaca;
+            color: #b91c1c;
+        }
+        
+        .btn-reset {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .btn-reset:hover {
+            background: #bfdbfe;
+            color: #1d4ed8;
+        }
+        
+        .floating-actions {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+        
+        .floating-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 1.25rem;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            margin-left: 1rem;
+        }
+        
+        .floating-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+            color: white;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .page-subtitle {
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column h-100">
+    <!-- Header -->
+    <header class="header-section">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="/">
+                    <div class="brand-icon me-3">
+                        <i class="fas fa-shield-check"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-name">Email Checker</span>
+                        <small class="brand-tagline d-block">Admin Panel</small>
+                    </div>
+                </a>
+                
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="fas fa-home me-2"></i>Trang chủ
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/admin">
+                                <i class="fas fa-cog me-2"></i>Quản trị
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="location.reload()">
+                                <i class="fas fa-refresh me-2"></i>Làm mới
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content flex-fill">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <!-- Breadcrumb -->
+                    <nav aria-label="breadcrumb" class="breadcrumb-section mb-4">
+                        <div class="container">
+                            <ol class="breadcrumb bg-transparent p-0 m-0">
+                                <li class="breadcrumb-item">
+                                    <a href="/" class="text-decoration-none">
+                                        <i class="fas fa-home me-1"></i>Trang chủ
+                                    </a>
+                                </li>
+                                <li class="breadcrumb-item active" aria-current="page">
+                                    Admin Dashboard
+                                </li>
+                            </ol>
+                        </div>
+                    </nav>
+                    
+                    <!-- Page Content -->
+                    <div class="page-content">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-12">
+                                    <!-- Header Section -->
+                                    <div class="d-flex justify-content-between align-items-center mb-5">
+                                        <div>
+                                            <h1 class="display-5 text-white fw-bold mb-2" style="animation: slideInLeft 0.8s ease-out;">
+                                                <i class="fas fa-shield-halved me-3"></i>Admin Dashboard
+                                            </h1>
+                                            <p class="text-white-75 mb-0" style="animation: fadeInUp 0.8s ease-out 0.2s both;">
+                                                Quản lý hệ thống email checker
+                                            </p>
+                                        </div>
+                                        <a href="/" class="btn btn-outline-light btn-lg" style="animation: slideInRight 0.8s ease-out;">
+                                            <i class="fas fa-arrow-left me-2"></i>Về trang chủ
+                                        </a>
+                                    </div>
+
+                                    <!-- Statistics Cards -->
+                                    <div class="row mb-5 g-4">
+                                        <div class="col-md-4">
+                                            <div class="card stats-card border-0 text-white h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                                <div class="card-body p-4">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <h2 class="display-4 fw-bold mb-0"><%= stats.total %></h2>
+                                                            <p class="mb-0 opacity-75">Tổng số email</p>
+                                                            <small class="opacity-50">Trong hệ thống</small>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <i class="fas fa-envelope fa-3x opacity-25"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card stats-card border-0 text-white h-100" style="background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);">
+                                                <div class="card-body p-4">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <h2 class="display-4 fw-bold mb-0"><%= stats.available %></h2>
+                                                            <p class="mb-0 opacity-75">Email khả dụng</p>
+                                                            <small class="opacity-50">Sẵn sàng sử dụng</small>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <i class="fas fa-check-circle fa-3x opacity-25"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card stats-card border-0 text-white h-100" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);">
+                                                <div class="card-body p-4">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <h2 class="display-4 fw-bold mb-0"><%= stats.used %></h2>
+                                                            <p class="mb-0 opacity-75">Email đã dùng</p>
+                                                            <small class="opacity-50">Không còn khả dụng</small>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <i class="fas fa-times-circle fa-3x opacity-25"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Add Email Form -->
+                                    <div class="card mb-5 border-0 shadow-lg">
+                                        <div class="card-header py-4" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                            <h4 class="mb-0 text-white fw-600">
+                                                <i class="fas fa-plus-circle me-2"></i>Thêm Email Mới
+                                            </h4>
+                                        </div>
+                                        <div class="card-body p-4">
+                                            <form id="addEmailForm" class="row g-3 align-items-end">
+                                                <div class="col-md-8">
+                                                    <label for="newEmail" class="form-label fw-semibold">Địa chỉ email</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">
+                                                            <i class="fas fa-envelope"></i>
+                                                        </span>
+                                                        <input type="email" class="form-control form-control-lg" id="newEmail" placeholder="example@domain.com" required>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <button type="submit" class="btn btn-primary btn-lg w-100 shadow">
+                                                        <i class="fas fa-plus me-2"></i>Thêm Email
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <!-- Email List -->
+                                    <div class="card border-0 shadow-lg">
+                                        <div class="card-header d-flex justify-content-between align-items-center py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                            <div>
+                                                <h4 class="mb-0 text-white fw-600">
+                                                    <i class="fas fa-table me-2"></i>Danh sách Email
+                                                </h4>
+                                                <small class="text-white-75">Quản lý tất cả email trong hệ thống</small>
+                                            </div>
+                                            <button class="btn btn-outline-light btn-sm shadow" onclick="location.reload()">
+                                                <i class="fas fa-sync-alt me-1"></i>Làm mới
+                                            </button>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <% if (message) { %>
+                                                <div class="alert alert-danger m-4">
+                                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                                    <%= message %>
+                                                </div>
+                                            <% } %>
+
+                                            <div id="alertContainer" class="m-4"></div>
+
+                                            <% if (emails.length > 0) { %>
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th class="px-4">ID</th>
+                                                                <th>Email</th>
+                                                                <th>Trạng thái</th>
+                                                                <th>Thời gian copy</th>
+                                                                <th>IP Copy</th>
+                                                                <th>Ngày tạo</th>
+                                                                <th class="text-center">Thao tác</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <% emails.forEach((email, index) => { %>
+                                                                <tr style="animation: fadeInUp 0.6s ease-out <%= index * 0.1 %>s both;">
+                                                                    <td class="px-4 fw-bold">#<%= email.id %></td>
+                                                                    <td>
+                                                                        <div class="d-flex align-items-center">
+                                                                            <i class="fas fa-envelope me-2 text-muted"></i>
+                                                                            <span class="font-monospace"><%= email.email %></span>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <% if (email.status === 'available') { %>
+                                                                            <span class="badge bg-success px-3 py-2">
+                                                                                <i class="fas fa-check me-1"></i>Khả dụng
+                                                                            </span>
+                                                                        <% } else { %>
+                                                                            <span class="badge bg-danger px-3 py-2">
+                                                                                <i class="fas fa-times me-1"></i>Đã dùng
+                                                                            </span>
+                                                                        <% } %>
+                                                                    </td>
+                                                                    <td>
+                                                                        <% if (email.copied_at) { %>
+                                                                            <small class="text-muted">
+                                                                                <i class="fas fa-clock me-1"></i>
+                                                                                <%= new Date(email.copied_at).toLocaleString('vi-VN') %>
+                                                                            </small>
+                                                                        <% } else { %>
+                                                                            <small class="text-muted">-</small>
+                                                                        <% } %>
+                                                                    </td>
+                                                                    <td>
+                                                                        <% if (email.copied_ip) { %>
+                                                                            <code class="text-info"><%= email.copied_ip %></code>
+                                                                        <% } else { %>
+                                                                            <small class="text-muted">-</small>
+                                                                        <% } %>
+                                                                    </td>
+                                                                    <td>
+                                                                        <small class="text-muted">
+                                                                            <i class="fas fa-calendar me-1"></i>
+                                                                            <%= new Date(email.created_at).toLocaleString('vi-VN') %>
+                                                                        </small>
+                                                                    </td>
+                                                                    <td class="text-center">
+                                                                        <div class="btn-group btn-group-sm">
+                                                                            <% if (email.status === 'used') { %>
+                                                                                <button class="btn btn-outline-warning reset-btn shadow-sm" data-email-id="<%= email.id %>" title="Reset về trạng thái khả dụng">
+                                                                                    <i class="fas fa-undo"></i>
+                                                                                </button>
+                                                                            <% } %>
+                                                                            <button class="btn btn-outline-danger delete-btn shadow-sm" data-email-id="<%= email.id %>" title="Xóa email">
+                                                                                <i class="fas fa-trash"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            <% }); %>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            <% } else { %>
+                                                <div class="text-center py-5 m-4">
+                                                    <div class="mb-4">
+                                                        <i class="fas fa-inbox fa-4x text-muted opacity-25"></i>
+                                                    </div>
+                                                    <h4 class="text-muted mb-3">Chưa có email nào</h4>
+                                                    <p class="text-muted mb-4">Hệ thống chưa có email nào. Sử dụng form bên trên để thêm email mới.</p>
+                                                    <button class="btn btn-primary" onclick="document.getElementById('newEmail').focus()">
+                                                        <i class="fas fa-plus me-2"></i>Thêm Email Đầu Tiên
+                                                    </button>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-section mt-auto">
+        <div class="footer-main">
+            <div class="container">
+                <div class="row g-4">
+                    <!-- Company Info -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="footer-widget">
+                            <h5 class="footer-title">
+                                <i class="fas fa-shield-check me-2"></i>
+                                Email Checker System
+                            </h5>
+                            <p class="footer-text">
+                                Hệ thống quản lý email với bảo mật cao, đảm bảo mỗi email chỉ được sử dụng một lần duy nhất.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Links -->
+                    <div class="col-lg-2 col-md-6">
+                        <div class="footer-widget">
+                            <h6 class="footer-subtitle">Liên kết nhanh</h6>
+                            <ul class="footer-links">
+                                <li><a href="/"><i class="fas fa-angle-right me-2"></i>Trang chủ</a></li>
+                                <li><a href="/admin"><i class="fas fa-angle-right me-2"></i>Quản trị</a></li>
+                                <li><a href="#" onclick="location.reload()"><i class="fas fa-angle-right me-2"></i>Làm mới</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Features -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="footer-widget">
+                            <h6 class="footer-subtitle">Tính năng</h6>
+                            <ul class="footer-links">
+                                <li><i class="fas fa-check me-2 text-success"></i>Email một lần sử dụng</li>
+                                <li><i class="fas fa-check me-2 text-success"></i>Theo dõi IP</li>
+                                <li><i class="fas fa-check me-2 text-success"></i>Quản lý tập trung</li>
+                                <li><i class="fas fa-check me-2 text-success"></i>Bảo mật cao</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- System Status -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="footer-widget">
+                            <h6 class="footer-subtitle">Trạng thái hệ thống</h6>
+                            <div class="system-status">
+                                <div class="status-item">
+                                    <span class="status-indicator online"></span>
+                                    <span class="status-text">Hệ thống hoạt động bình thường</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-indicator online"></span>
+                                    <span class="status-text">Database kết nối tốt</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-indicator online"></span>
+                                    <span class="status-text">API phản hồi nhanh</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="copyright">
+                            <i class="fas fa-copyright me-1"></i>
+                            <span id="currentYear">2025</span> Email Checker System. All rights reserved.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="footer-meta text-md-end">
+                            <span class="meta-item">
+                                Made with <i class="fas fa-heart text-danger mx-1"></i> by Developer
+                            </span>
+                            <span class="meta-divider">|</span>
+                            <span class="meta-item">
+                                Version 1.0.0
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/main.js"></script>
+    
+    <script>
+        // Set current year
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        // DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listeners for delete buttons
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-email-id');
+                    deleteEmail(id);
+                });
+            });
+            
+            // Add event listeners for reset buttons
+            document.querySelectorAll('.reset-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-email-id');
+                    resetEmail(id);
+                });
+            });
+        });
+
+        // Add email form handler
+        document.getElementById('addEmailForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const emailInput = document.getElementById('newEmail');
+            const email = emailInput.value.trim();
+            const alertContainer = document.getElementById('alertContainer');
+            
+            if (!email) {
+                showAlert('danger', 'Vui lòng nhập email hợp lệ');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/admin/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('success', result.message);
+                    emailInput.value = '';
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('danger', 'Có lỗi xảy ra khi thêm email');
+            }
+        });
+
+        // Delete email function
+        async function deleteEmail(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa email này?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/admin/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: id })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('success', result.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('danger', 'Có lỗi xảy ra khi xóa email');
+            }
+        }
+
+        // Reset email function
+        async function resetEmail(id) {
+            if (!confirm('Bạn có chắc chắn muốn reset email này về trạng thái khả dụng?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/admin/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: id })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('success', result.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('danger', 'Có lỗi xảy ra khi reset email');
+            }
+        }
+
+        // Show alert function
+        function showAlert(type, message) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass} alert-dismissible fade show">
+                    <i class="fas ${iconClass} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

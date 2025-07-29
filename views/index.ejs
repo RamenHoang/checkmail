@@ -1,0 +1,883 @@
+
+
+<!DOCTYPE html>
+<html lang="vi" class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hệ thống quản lý email với bảo mật cao - mỗi email chỉ sử dụng một lần">
+    <meta name="keywords" content="email checker, email management, one-time email, secure email">
+    <meta name="author" content="Email Checker System">
+    <title>Email Checker System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    
+    <style>
+        .email-card .card-header::before {
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            background-color: rgba(255, 255, 255, 0.7);
+            pointer-events: none;
+        }
+        
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="d-flex flex-column h-100">
+    <!-- Header -->
+    <header class="header-section">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="/">
+                    <div class="brand-icon me-3">
+                        <i class="fas fa-shield-check"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-name">Email Checker</span>
+                        <small class="brand-tagline d-block">Secure & Reliable</small>
+                    </div>
+                </a>
+                
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="fas fa-home me-2"></i>Trang chủ
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin">
+                                <i class="fas fa-cog me-2"></i>Quản trị
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="location.reload()">
+                                <i class="fas fa-refresh me-2"></i>Làm mới
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content flex-fill">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <!-- Breadcrumb -->
+                    <nav aria-label="breadcrumb" class="breadcrumb-section mb-4">
+                        <div class="container">
+                            <ol class="breadcrumb bg-transparent p-0 m-0">
+                                <li class="breadcrumb-item">
+                                    <a href="/" class="text-decoration-none">
+                                        <i class="fas fa-home me-1"></i>Trang chủ
+                                    </a>
+                                </li>
+                            </ol>
+                        </div>
+                    </nav>
+                    
+                    <!-- Page Content -->
+                    <div class="page-content">
+                        <div class="container">
+                            <!-- Email Display Section -->
+                            <div class="hero-section">
+                                <div class="container">
+                                    <div class="row justify-content-center">
+                                        <div class="col-lg-8 col-md-10">
+                                            <!-- Hero Header -->
+                                            <div class="hero-header text-center mb-5">
+                                                <div class="hero-icon mb-4" style="animation: bounceIn 1.2s ease-out;">
+                                                    <i class="fas fa-shield-check"></i>
+                                                </div>
+                                                <h1 class="hero-title" style="animation: fadeInUp 0.8s ease-out 0.2s both;">
+                                                    🛡️ <span class="gradient-text">Email Checker</span> System
+                                                </h1>
+                                                <p class="hero-subtitle" style="animation: fadeInUp 0.8s ease-out 0.4s both;">
+                                                    Hệ thống quản lý email với bảo mật cao - mỗi email chỉ sử dụng <strong>một lần duy nhất</strong>
+                                                </p>
+                                                
+                                                <!-- Features Pills -->
+                                                <div class="features-pills" style="animation: fadeInUp 0.8s ease-out 0.6s both;">
+                                                    <span class="badge bg-success me-2 mb-2">
+                                                        <i class="fas fa-check me-1"></i>Bảo mật tuyệt đối
+                                                    </span>
+                                                    <span class="badge bg-info me-2 mb-2">
+                                                        <i class="fas fa-bolt me-1"></i>Xử lý siêu nhanh
+                                                    </span>
+                                                    <span class="badge bg-warning text-dark me-2 mb-2">
+                                                        <i class="fas fa-eye me-1"></i>Theo dõi IP
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Alert Container -->
+                                            <div id="alertContainer" class="mb-4"></div>
+
+                                            <!-- Loading State -->
+                            <div id="loadingState" class="text-center mb-4">
+                                <div class="spinner-border text-light" role="status">
+                                    <span class="visually-hidden">Đang tải...</span>
+                                </div>
+                                <p class="mt-3 text-white-75">Đang tải danh sách email...</p>
+                            </div>
+
+                            <!-- Email Statistics -->
+                            <div id="emailStats" class="mb-4" style="display: none;">
+                                <div class="row text-center">
+                                    <div class="col-md-4">
+                                        <div class="stat-card bg-primary text-white p-3 rounded">
+                                            <h3 id="totalEmails" class="mb-1">0</h3>
+                                            <small>Tổng số email</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="stat-card bg-success text-white p-3 rounded">
+                                            <h3 id="availableEmails" class="mb-1">0</h3>
+                                            <small>Email khả dụng</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="stat-card bg-warning text-dark p-3 rounded">
+                                            <h3 id="usedEmails" class="mb-1">0</h3>
+                                            <small>Email đã dùng</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Email List -->
+                            <div id="emailList" style="display: none;">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <div>
+                                            <h4 class="mb-0 text-white">
+                                                <i class="fas fa-list me-2"></i>
+                                                Danh sách Email
+                                            </h4>
+                                            <small class="text-white-75">Click vào email để copy</small>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div id="emailTable" class="table-responsive">
+                                            <!-- Email list will be populated here -->
+                                        </div>
+                                        <!-- Pagination Controls -->
+                                        <div id="paginationContainer" class="d-flex justify-content-between align-items-center p-3 bg-light" style="display: none;">
+                                            <div class="pagination-info">
+                                                <small class="text-muted">
+                                                    Hiển thị <span id="itemsRange">0-0</span> trong tổng số <span id="totalItems">0</span> email
+                                                </small>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <!-- Page Selector -->
+                                                <div class="d-flex align-items-center">
+                                                    <small class="text-muted me-2">Trang:</small>
+                                                    <select id="pageSelector" class="form-select form-select-sm" style="width: auto;" onchange="changePage(this.value)">
+                                                        <!-- Page options will be populated here -->
+                                                    </select>
+                                                </div>
+                                                <!-- Pagination Navigation -->
+                                                <nav aria-label="Email pagination">
+                                                    <ul id="paginationNav" class="pagination pagination-sm mb-0">
+                                                        <!-- Pagination buttons will be populated here -->
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- No Emails State -->
+                            <div id="noEmailsState" style="display: none;">
+                                <div class="no-email-container">
+                                    <div class="no-email-card">
+                                        <div class="text-center">
+                                            <div class="empty-icon mb-4">
+                                                <i class="fas fa-inbox"></i>
+                                            </div>
+                                            <h3 class="empty-title mb-3">
+                                                😔 Không có email khả dụng
+                                            </h3>
+                                            <p class="empty-subtitle mb-4">
+                                                Hiện tại hệ thống không có email nào sẵn sàng để sử dụng. 
+                                                Vui lòng liên hệ quản trị viên để thêm email mới.
+                                            </p>
+                                            <div class="empty-actions">
+                                                <a href="/admin" class="btn btn-primary me-2">
+                                                    <i class="fas fa-cog me-2"></i>
+                                                    Quản trị hệ thống
+                                                </a>
+                                                <button class="btn btn-outline-primary" onclick="loadEmailList(1, true)">
+                                                    <i class="fas fa-refresh me-2"></i>
+                                                    Thử lại
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Statistics Section -->
+                            <!-- <div class="stats-section">
+                                <div class="container">
+                                    <div class="row g-4">
+                                        <div class="col-md-3 col-sm-6">
+                                            <div class="stat-card" style="animation: slideInUp 0.8s ease-out 1s both;">
+                                                <div class="stat-icon bg-primary">
+                                                    <i class="fas fa-envelope"></i>
+                                                </div>
+                                                <div class="stat-content">
+                                                    <div class="stat-number">∞</div>
+                                                    <div class="stat-label">Email được bảo vệ</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 col-sm-6">
+                                            <div class="stat-card" style="animation: slideInUp 0.8s ease-out 1.2s both;">
+                                                <div class="stat-icon bg-success">
+                                                    <i class="fas fa-shield-check"></i>
+                                                </div>
+                                                <div class="stat-content">
+                                                    <div class="stat-number">100%</div>
+                                                    <div class="stat-label">Bảo mật tuyệt đối</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 col-sm-6">
+                                            <div class="stat-card" style="animation: slideInUp 0.8s ease-out 1.4s both;">
+                                                <div class="stat-icon bg-info">
+                                                    <i class="fas fa-bolt"></i>
+                                                </div>
+                                                <div class="stat-content">
+                                                    <div class="stat-number">&lt;1s</div>
+                                                    <div class="stat-label">Thời gian xử lý</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 col-sm-6">
+                                            <div class="stat-card" style="animation: slideInUp 0.8s ease-out 1.6s both;">
+                                                <div class="stat-icon bg-warning">
+                                                    <i class="fas fa-eye"></i>
+                                                </div>
+                                                <div class="stat-content">
+                                                    <div class="stat-number">24/7</div>
+                                                    <div class="stat-label">Giám sát liên tục</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-section mt-auto">
+        <div class="footer-main">
+            <div class="container">
+                <div class="row g-4">
+                    <!-- Company Info -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="footer-widget">
+                            <h5 class="footer-title">
+                                <i class="fas fa-shield-check me-2"></i>
+                                Email Checker System
+                            </h5>
+                            <p class="footer-text">
+                                Hệ thống quản lý email với bảo mật cao, đảm bảo mỗi email chỉ được sử dụng một lần duy nhất.
+                            </p>
+                            <div class="footer-stats">
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="stat-item">
+                                            <i class="fas fa-shield-alt"></i>
+                                            <span>Bảo mật</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-item">
+                                            <i class="fas fa-bolt"></i>
+                                            <span>Nhanh chóng</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-item">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Đáng tin</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Links -->
+                    <div class="col-lg-2 col-md-6">
+                        <div class="footer-widget">
+                            <h6 class="footer-subtitle">Liên kết nhanh</h6>
+                            <ul class="footer-links">
+                                <li><a href="/"><i class="fas fa-angle-right me-2"></i>Trang chủ</a></li>
+                                <li><a href="/admin"><i class="fas fa-angle-right me-2"></i>Quản trị</a></li>
+                                <li><a href="#" onclick="location.reload()"><i class="fas fa-angle-right me-2"></i>Làm mới</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Features -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="footer-widget">
+                            <h6 class="footer-subtitle">Tính năng</h6>
+                            <ul class="footer-links">
+                                <li><i class="fas fa-check me-2 text-success"></i>Email một lần sử dụng</li>
+                                <li><i class="fas fa-check me-2 text-success"></i>Theo dõi IP</li>
+                                <li><i class="fas fa-check me-2 text-success"></i>Quản lý tập trung</li>
+                                <li><i class="fas fa-check me-2 text-success"></i>Bảo mật cao</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- System Status -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="footer-widget">
+                            <h6 class="footer-subtitle">Trạng thái hệ thống</h6>
+                            <div class="system-status">
+                                <div class="status-item">
+                                    <span class="status-indicator online"></span>
+                                    <span class="status-text">Hệ thống hoạt động bình thường</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-indicator online"></span>
+                                    <span class="status-text">Database kết nối tốt</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-indicator online"></span>
+                                    <span class="status-text">API phản hồi nhanh</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="copyright">
+                            <i class="fas fa-copyright me-1"></i>
+                            <span id="currentYear">2025</span> Email Checker System. All rights reserved.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="footer-meta text-md-end">
+                            <span class="meta-item">
+                                Made with <i class="fas fa-heart text-danger mx-1"></i> by Developer
+                            </span>
+                            <span class="meta-divider">|</span>
+                            <span class="meta-item">
+                                Version 1.0.0
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick Actions -->
+    <div class="floating-actions">
+        <div class="fab-container">
+            <button class="fab fab-main" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-plus"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end fab-menu">
+                <li>
+                    <a class="dropdown-item" href="/">
+                        <i class="fas fa-home me-2"></i>Về trang chủ
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="/admin">
+                        <i class="fas fa-cog me-2"></i>Quản trị hệ thống
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="#" onclick="location.reload()">
+                        <i class="fas fa-refresh me-2"></i>Làm mới trang
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="#" onclick="scrollToTop()">
+                        <i class="fas fa-arrow-up me-2"></i>Lên đầu trang
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/main.js"></script>
+    
+    <script>
+        // Set current year
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        // Scroll to top function
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+        
+        // Show/hide scroll to top button
+        window.addEventListener('scroll', function() {
+            const scrollBtn = document.querySelector('.scroll-to-top');
+            if (scrollBtn) {
+                if (window.pageYOffset > 300) {
+                    scrollBtn.classList.add('show');
+                } else {
+                    scrollBtn.classList.remove('show');
+                }
+            }
+        });
+        
+        // Enhanced page load animation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add stagger animation to main content
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) {
+                mainContent.classList.add('fade-in-up');
+            }
+            
+            // Animate breadcrumb
+            const breadcrumb = document.querySelector('.breadcrumb-section');
+            if (breadcrumb) {
+                breadcrumb.style.animation = 'slideInDown 0.6s ease-out 0.2s both';
+            }
+            
+            // Animate footer elements
+            const footerWidgets = document.querySelectorAll('.footer-widget');
+            footerWidgets.forEach((widget, index) => {
+                widget.style.animation = `fadeInUp 0.6s ease-out ${0.1 * (index + 1)}s both`;
+            });
+        });
+        
+        // Page specific functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load email list on page load (only available emails)
+            loadEmailList(1, true);
+        });
+
+        // Global pagination state
+        let currentPage = 1;
+        let showOnlyAvailable = true;
+        const itemsPerPage = 10;
+
+        // Load email list from API with pagination
+        async function loadEmailList(page = 1, availableOnly = true) {
+            const loadingState = document.getElementById('loadingState');
+            const emailStats = document.getElementById('emailStats');
+            const emailList = document.getElementById('emailList');
+            const noEmailsState = document.getElementById('noEmailsState');
+            const paginationContainer = document.getElementById('paginationContainer');
+            
+            // Update global state
+            currentPage = page;
+            showOnlyAvailable = availableOnly;
+            
+            // Show loading state
+            loadingState.style.display = 'block';
+            emailStats.style.display = 'none';
+            emailList.style.display = 'none';
+            noEmailsState.style.display = 'none';
+            paginationContainer.style.display = 'none';
+            
+            try {
+                const queryParams = new URLSearchParams({
+                    page: page,
+                    limit: itemsPerPage,
+                    available: availableOnly
+                });
+                
+                const response = await fetch(`/api/emails?${queryParams}`);
+                const result = await response.json();
+                
+                console.log('API Response:', result);
+                
+                if (result.success) {
+                    const { emails, pagination, total, available } = result;
+                    
+                    // Debug: Log the pagination object
+                    console.log('Pagination object:', pagination);
+                    console.log('Emails received:', emails?.length || 0);
+                    
+                    // Update statistics
+                    document.getElementById('totalEmails').textContent = total || 0;
+                    document.getElementById('availableEmails').textContent = available || 0;
+                    document.getElementById('usedEmails').textContent = (total || 0) - (available || 0);
+                    
+                    if (emails && emails.length > 0) {
+                        // Show email list
+                        renderEmailList(emails);
+                        if (pagination && pagination.currentPage) {
+                            renderPagination(pagination);
+                            paginationContainer.style.display = 'flex';
+                        } else {
+                            console.warn('Invalid pagination object, hiding pagination');
+                            paginationContainer.style.display = 'none';
+                        }
+                        emailStats.style.display = 'block';
+                        emailList.style.display = 'block';
+                    } else {
+                        // Show no emails state
+                        console.log('No emails found, showing empty state');
+                        noEmailsState.style.display = 'block';
+                    }
+                } else {
+                    throw new Error(result.message || 'Unknown error occurred');
+                }
+            } catch (error) {
+                console.error('Error loading emails:', error);
+                showAlert('danger', 'Không thể tải danh sách email: ' + error.message);
+                noEmailsState.style.display = 'block';
+            } finally {
+                loadingState.style.display = 'none';
+            }
+        }
+
+        // Render pagination controls
+        function renderPagination(pagination) {
+            const paginationNav = document.getElementById('paginationNav');
+            const pageSelector = document.getElementById('pageSelector');
+            const itemsRange = document.getElementById('itemsRange');
+            const totalItems = document.getElementById('totalItems');
+            
+            // Check if pagination object exists and has required properties
+            if (!pagination || typeof pagination.currentPage === 'undefined') {
+                console.warn('Pagination object is invalid:', pagination);
+                document.getElementById('paginationContainer').style.display = 'none';
+                return;
+            }
+            
+            console.log('Rendering pagination with:', pagination);
+            
+            // Update pagination info
+            const startItem = pagination.startIndex || ((pagination.currentPage - 1) * pagination.limit + 1);
+            const endItem = pagination.endIndex || Math.min(pagination.currentPage * pagination.limit, pagination.totalItems);
+            
+            itemsRange.textContent = `${startItem}-${endItem}`;
+            totalItems.textContent = pagination.totalItems || 0;
+            
+            // Populate page selector dropdown
+            let pageOptions = '';
+            for (let i = 1; i <= pagination.totalPages; i++) {
+                pageOptions += `<option value="${i}" ${i === pagination.currentPage ? 'selected' : ''}>${i}</option>`;
+            }
+            pageSelector.innerHTML = pageOptions;
+            
+            // Don't show pagination if there's only one page or no items
+            if (pagination.totalPages <= 1) {
+                paginationNav.innerHTML = '';
+                // Hide page selector if only one page
+                pageSelector.parentElement.style.display = pagination.totalPages <= 1 ? 'none' : 'flex';
+                return;
+            }
+            
+            // Show page selector for multiple pages
+            pageSelector.parentElement.style.display = 'flex';
+            
+            // Generate pagination buttons
+            let paginationHTML = '';
+            
+            // Previous button
+            paginationHTML += `
+                <li class="page-item ${!pagination.hasPrev ? 'disabled' : ''}">
+                    <button class="page-link" onclick="changePage(${pagination.currentPage - 1})" ${!pagination.hasPrev ? 'disabled' : ''}>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                </li>
+            `;
+            
+            // Page numbers (show fewer numbers when there are many pages)
+            const maxVisiblePages = 5;
+            const startPage = Math.max(1, pagination.currentPage - Math.floor(maxVisiblePages / 2));
+            const endPage = Math.min(pagination.totalPages, startPage + maxVisiblePages - 1);
+            
+            if (startPage > 1) {
+                paginationHTML += `
+                    <li class="page-item">
+                        <button class="page-link" onclick="changePage(1)">1</button>
+                    </li>
+                `;
+                if (startPage > 2) {
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <li class="page-item ${i === pagination.currentPage ? 'active' : ''}">
+                        <button class="page-link" onclick="changePage(${i})">${i}</button>
+                    </li>
+                `;
+            }
+            
+            if (endPage < pagination.totalPages) {
+                if (endPage < pagination.totalPages - 1) {
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+                paginationHTML += `
+                    <li class="page-item">
+                        <button class="page-link" onclick="changePage(${pagination.totalPages})">${pagination.totalPages}</button>
+                    </li>
+                `;
+            }
+            
+            // Next button
+            paginationHTML += `
+                <li class="page-item ${!pagination.hasNext ? 'disabled' : ''}">
+                    <button class="page-link" onclick="changePage(${pagination.currentPage + 1})" ${!pagination.hasNext ? 'disabled' : ''}>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </li>
+            `;
+            
+            paginationNav.innerHTML = paginationHTML;
+        }
+
+        // Change page function
+        function changePage(page) {
+            const pageNum = parseInt(page);
+            if (pageNum >= 1) {
+                console.log('Changing to page:', pageNum);
+                loadEmailList(pageNum, showOnlyAvailable);
+            }
+        }
+
+        // Render email list table
+        function renderEmailList(emails) {
+            const tableContainer = document.getElementById('emailTable');
+            
+            let tableHTML = `
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>UUID</th>
+                            <th>Email (Masked)</th>
+                            <th>Domain</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            emails.forEach((email, index) => {
+                const statusClass = email.status === 'available' ? 'success' : 'secondary';
+                const statusText = email.status === 'available' ? 'Khả dụng' : 'Đã dùng';
+                const statusIcon = email.status === 'available' ? 'check-circle' : 'times-circle';
+                const isDisabled = email.status !== 'available';
+                // Show only first 8 characters of UUID for readability, with fallback for non-string IDs
+                const shortId = (email.id && typeof email.id === 'string') 
+                    ? email.id.substring(0, 8) 
+                    : (email.id || 'N/A');
+                
+                tableHTML += `
+                    <tr>
+                        <td class="fw-bold" title="${email.id || 'No ID'}">${shortId}${typeof email.id === 'string' && email.id.length > 8 ? '...' : ''}</td>
+                        <td class="font-monospace">${email.email_masked}</td>
+                        <td><code class="text-info">${email.domain}</code></td>
+                        <td>
+                            <span class="badge bg-${statusClass}">
+                                <i class="fas fa-${statusIcon} me-1"></i>${statusText}
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                ${new Date(email.created_at).toLocaleString('vi-VN')}
+                            </small>
+                        </td>
+                        <td>
+                            <button 
+                                class="btn btn-sm ${isDisabled ? 'btn-secondary' : 'btn-success'} copy-email-btn" 
+                                data-email-id="${email.id}"
+                                ${isDisabled ? 'disabled' : ''}
+                                onclick="copyEmailById('${email.id}')"
+                            >
+                                <i class="fas fa-copy me-1"></i>
+                                ${isDisabled ? 'Đã dùng' : 'Copy'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            
+            tableContainer.innerHTML = tableHTML;
+        }
+
+        // Copy email by ID
+        async function copyEmailById(emailId) {
+            const alertContainer = document.getElementById('alertContainer');
+            
+            try {
+                // Get actual email for copying
+                const response = await fetch('/api/get-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: emailId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Copy to clipboard
+                    await navigator.clipboard.writeText(result.email);
+                    showToast('Email đã được copy vào clipboard!', 'success');
+                    
+                    // Mark as used
+                    const copyResponse = await fetch('/copy', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ id: emailId })
+                    });
+                    
+                    const copyResult = await copyResponse.json();
+                    
+                    if (copyResult.success) {
+                        showAlert('success', '🎉 Email đã được copy và đánh dấu đã sử dụng!');
+                        // Reload email list to reflect changes
+                        setTimeout(() => {
+                            loadEmailList(currentPage, showOnlyAvailable);
+                        }, 2000);
+                    } else {
+                        showAlert('warning', 'Email đã được copy nhưng có lỗi khi đánh dấu đã sử dụng');
+                    }
+                } else {
+                    showAlert('danger', result.message);
+                }
+            } catch (error) {
+                console.error('Error copying email:', error);
+                showAlert('danger', 'Có lỗi xảy ra khi copy email: ' + error.message);
+            }
+        }
+
+        // Show alert function
+        function showAlert(type, message) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : 
+                               type === 'warning' ? 'alert-warning' : 
+                               type === 'info' ? 'alert-info' : 'alert-danger';
+            const iconClass = type === 'success' ? 'fa-check-circle' : 
+                             type === 'warning' ? 'fa-exclamation-triangle' : 
+                             type === 'info' ? 'fa-info-circle' : 'fa-exclamation-triangle';
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass} alert-dismissible fade show">
+                    <i class="fas ${iconClass} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+
+        // Create confetti animation
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'];
+            
+            for (let i = 0; i < 30; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.cssText = `
+                    position: fixed;
+                    top: -10px;
+                    left: ${Math.random() * 100}vw;
+                    width: 8px;
+                    height: 8px;
+                    background: ${colors[Math.floor(Math.random() * colors.length)]};
+                    animation: confetti-fall ${2 + Math.random() * 3}s linear forwards;
+                    z-index: 9999;
+                    pointer-events: none;
+                    border-radius: 2px;
+                `;
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 5000);
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'primary'} border-0 position-fixed top-0 end-0 m-3`;
+            toast.style.zIndex = '9999';
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-${type === 'success' ? 'check' : 'info'}-circle me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            setTimeout(() => toast.remove(), 5000);
+        }
+    </script>
+</body>
+</html>
+
+
