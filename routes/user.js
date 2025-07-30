@@ -107,6 +107,46 @@ router.get('/api/emails', async (req, res) => {
   }
 });
 
+// API: Request an available email (automatically marks as copied)
+router.post('/api/request-email', async (req, res) => {
+  try {
+    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    
+    // Get an available email
+    const email = await db.getAvailableEmail();
+    
+    if (!email) {
+      return res.json({ 
+        success: false, 
+        message: 'Không có email khả dụng. Vui lòng thử lại sau hoặc liên hệ quản trị viên.' 
+      });
+    }
+
+    // Immediately mark it as used
+    const markSuccess = await db.markEmailAsUsed(email.id, clientIP);
+    
+    if (markSuccess) {
+      res.json({ 
+        success: true, 
+        email: email.email,
+        message: 'Email đã được cấp phát thành công và sẵn sàng sử dụng!'
+      });
+    } else {
+      // This shouldn't happen, but handle edge case
+      res.json({ 
+        success: false, 
+        message: 'Có lỗi xảy ra khi xử lý email. Vui lòng thử lại.' 
+      });
+    }
+  } catch (error) {
+    console.error('Error requesting email:', error);
+    res.json({ 
+      success: false, 
+      message: 'Có lỗi xảy ra khi lấy email: ' + error.message 
+    });
+  }
+});
+
 // API: Get specific email for copying (requires authentication-like mechanism)
 router.post('/api/get-email', async (req, res) => {
   try {
