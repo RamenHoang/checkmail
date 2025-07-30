@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin Settings - Email Checker System">
+    <meta name="keywords" content="admin, settings, email management">
+    <meta name="author" content="Email Checker System">
+    <title>Admin Settings - Email Checker System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    
+    <style>
+        .settings-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .settings-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .form-floating {
+            margin-bottom: 1rem;
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+        
+        .current-user-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .password-strength {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+        
+        .strength-weak { color: #dc3545; }
+        .strength-medium { color: #ffc107; }
+        .strength-strong { color: #28a745; }
+    </style>
+</head>
+<body class="d-flex flex-column h-100">
+    <!-- Header -->
+    <header class="header-section">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="/">
+                    <div class="brand-icon me-3">
+                        <i class="fas fa-shield-check"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-name">Email Checker</span>
+                        <small class="brand-tagline d-block">Admin Settings</small>
+                    </div>
+                </a>
+                
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="fas fa-home me-2"></i>Trang chủ
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin">
+                                <i class="fas fa-cog me-2"></i>Quản trị
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/admin/settings">
+                                <i class="fas fa-user-cog me-2"></i>Cài đặt
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <form method="POST" action="/admin/logout" class="d-inline">
+                                <button type="submit" class="nav-link btn btn-link border-0 p-0" style="color: rgba(255, 255, 255, 0.9);">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content flex-fill">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <!-- Breadcrumb -->
+                    <nav aria-label="breadcrumb" class="breadcrumb-section mb-4">
+                        <div class="container">
+                            <ol class="breadcrumb bg-transparent p-0 m-0">
+                                <li class="breadcrumb-item">
+                                    <a href="/" class="text-decoration-none">
+                                        <i class="fas fa-home me-1"></i>Trang chủ
+                                    </a>
+                                </li>
+                                <li class="breadcrumb-item">
+                                    <a href="/admin" class="text-decoration-none">
+                                        Admin Dashboard
+                                    </a>
+                                </li>
+                                <li class="breadcrumb-item active" aria-current="page">
+                                    Cài đặt
+                                </li>
+                            </ol>
+                        </div>
+                    </nav>
+                    
+                    <!-- Page Content -->
+                    <div class="page-content">
+                        <div class="container">
+                            <div class="settings-container">
+                                <!-- Header Section -->
+                                <div class="text-center mb-5">
+                                    <h1 class="display-5 text-white fw-bold mb-2" style="animation: slideInDown 0.8s ease-out;">
+                                        <i class="fas fa-user-cog me-3"></i>Cài đặt Admin
+                                    </h1>
+                                    <p class="text-white-75 mb-0" style="animation: fadeInUp 0.8s ease-out 0.2s both;">
+                                        Thay đổi thông tin đăng nhập của bạn
+                                    </p>
+                                </div>
+
+                                <!-- Current User Info -->
+                                <div class="current-user-info">
+                                    <h5 class="mb-2">
+                                        <i class="fas fa-user me-2"></i>Thông tin hiện tại
+                                    </h5>
+                                    <p class="mb-0">
+                                        <strong>Tên đăng nhập:</strong> <%= currentUsername %>
+                                    </p>
+                                </div>
+
+                                <!-- Settings Form -->
+                                <div class="settings-card">
+                                    <% if (error) { %>
+                                        <div class="alert alert-danger">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <%= error %>
+                                        </div>
+                                    <% } %>
+
+                                    <% if (message) { %>
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            <%= message %>
+                                        </div>
+                                    <% } %>
+
+                                    <form method="POST" action="/admin/change-credentials" id="settingsForm">
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <h4 class="mb-4">
+                                                    <i class="fas fa-key me-2 text-primary"></i>Thay đổi thông tin đăng nhập
+                                                </h4>
+                                            </div>
+                                        </div>
+
+                                        <!-- Current Password -->
+                                        <div class="form-floating">
+                                            <input type="password" class="form-control" id="currentPassword" name="currentPassword" placeholder="Mật khẩu hiện tại" required>
+                                            <label for="currentPassword">
+                                                <i class="fas fa-lock me-2"></i>Mật khẩu hiện tại
+                                            </label>
+                                        </div>
+
+                                        <!-- New Username -->
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="newUsername" name="newUsername" placeholder="Tên đăng nhập mới" value="<%= currentUsername %>" required>
+                                            <label for="newUsername">
+                                                <i class="fas fa-user me-2"></i>Tên đăng nhập mới
+                                            </label>
+                                        </div>
+
+                                        <!-- New Password -->
+                                        <div class="form-floating">
+                                            <input type="password" class="form-control" id="newPassword" name="newPassword" placeholder="Mật khẩu mới" required>
+                                            <label for="newPassword">
+                                                <i class="fas fa-key me-2"></i>Mật khẩu mới
+                                            </label>
+                                            <div id="passwordStrength" class="password-strength"></div>
+                                        </div>
+
+                                        <!-- Confirm Password -->
+                                        <div class="form-floating">
+                                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Xác nhận mật khẩu mới" required>
+                                            <label for="confirmPassword">
+                                                <i class="fas fa-check me-2"></i>Xác nhận mật khẩu mới
+                                            </label>
+                                            <div id="passwordMatch" class="password-strength"></div>
+                                        </div>
+
+                                        <!-- Security Notice -->
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>Lưu ý bảo mật:</strong>
+                                            <ul class="mb-0 mt-2">
+                                                <li>Mật khẩu phải có ít nhất 6 ký tự</li>
+                                                <li>Sử dụng mật khẩu mạnh để bảo vệ tài khoản</li>
+                                                <li>Không chia sẻ thông tin đăng nhập với người khác</li>
+                                            </ul>
+                                        </div>
+
+                                        <!-- Submit Button -->
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                            <a href="/admin" class="btn btn-outline-secondary btn-lg me-md-2">
+                                                <i class="fas fa-arrow-left me-2"></i>Quay lại
+                                            </a>
+                                            <button type="submit" class="btn btn-save btn-lg text-white">
+                                                <i class="fas fa-save me-2"></i>Lưu thay đổi
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-section mt-auto">
+        <div class="footer-main">
+            <div class="container">
+                <div class="row g-4">
+                    <!-- Company Info -->
+                    <div class="col-lg-6 col-md-6">
+                        <div class="footer-widget">
+                            <h5 class="footer-title">
+                                <i class="fas fa-shield-check me-2"></i>
+                                Email Checker System
+                            </h5>
+                            <p class="footer-text">
+                                Hệ thống quản lý email với bảo mật cao, đảm bảo mỗi email chỉ được sử dụng một lần duy nhất.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- System Status -->
+                    <div class="col-lg-6 col-md-6">
+                        <div class="footer-widget">
+                            <h6 class="footer-subtitle">Bảo mật</h6>
+                            <div class="system-status">
+                                <div class="status-item">
+                                    <span class="status-indicator online"></span>
+                                    <span class="status-text">Mật khẩu được mã hóa an toàn</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-indicator online"></span>
+                                    <span class="status-text">Phiên đăng nhập được bảo vệ</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="copyright">
+                            <i class="fas fa-copyright me-1"></i>
+                            <span id="currentYear">2025</span> Email Checker System. All rights reserved.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="footer-meta text-md-end">
+                            <span class="meta-item">
+                                Admin Settings Panel
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/main.js"></script>
+    
+    <script>
+        // Set current year
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        // Password strength checker
+        function checkPasswordStrength(password) {
+            const strengthIndicator = document.getElementById('passwordStrength');
+            let strength = 0;
+            let message = '';
+            let className = '';
+
+            if (password.length >= 6) strength++;
+            if (password.match(/[a-z]/)) strength++;
+            if (password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+
+            switch (strength) {
+                case 0:
+                case 1:
+                    message = 'Mật khẩu yếu';
+                    className = 'strength-weak';
+                    break;
+                case 2:
+                case 3:
+                    message = 'Mật khẩu trung bình';
+                    className = 'strength-medium';
+                    break;
+                case 4:
+                case 5:
+                    message = 'Mật khẩu mạnh';
+                    className = 'strength-strong';
+                    break;
+            }
+
+            strengthIndicator.textContent = message;
+            strengthIndicator.className = `password-strength ${className}`;
+        }
+
+        // Password match checker
+        function checkPasswordMatch() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const matchIndicator = document.getElementById('passwordMatch');
+
+            if (confirmPassword === '') {
+                matchIndicator.textContent = '';
+                matchIndicator.className = 'password-strength';
+            } else if (newPassword === confirmPassword) {
+                matchIndicator.textContent = 'Mật khẩu khớp';
+                matchIndicator.className = 'password-strength strength-strong';
+            } else {
+                matchIndicator.textContent = 'Mật khẩu không khớp';
+                matchIndicator.className = 'password-strength strength-weak';
+            }
+        }
+
+        // Event listeners
+        document.getElementById('newPassword').addEventListener('input', function() {
+            checkPasswordStrength(this.value);
+            checkPasswordMatch();
+        });
+
+        document.getElementById('confirmPassword').addEventListener('input', checkPasswordMatch);
+
+        // Form validation
+        document.getElementById('settingsForm').addEventListener('submit', function(e) {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                e.preventDefault();
+                alert('Mật khẩu mới và xác nhận mật khẩu không khớp!');
+                return false;
+            }
+
+            if (newPassword.length < 6) {
+                e.preventDefault();
+                alert('Mật khẩu mới phải có ít nhất 6 ký tự!');
+                return false;
+            }
+
+            return true;
+        });
+
+        // Animation on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const settingsCard = document.querySelector('.settings-card');
+            if (settingsCard) {
+                settingsCard.style.animation = 'fadeInUp 0.8s ease-out 0.4s both';
+            }
+        });
+    </script>
+</body>
+</html>

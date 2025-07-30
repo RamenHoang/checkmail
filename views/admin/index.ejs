@@ -227,6 +227,18 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="/admin/settings">
+                                <i class="fas fa-user-cog me-2"></i>Cài đặt
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <form method="POST" action="/admin/logout" class="d-inline">
+                                <button type="submit" class="nav-link btn btn-link border-0 p-0" style="color: rgba(255, 255, 255, 0.9);">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                                </button>
+                            </form>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="#" onclick="location.reload()">
                                 <i class="fas fa-refresh me-2"></i>Làm mới
                             </a>
@@ -330,6 +342,38 @@
                                         </div>
                                     </div>
 
+                                    <!-- Quick Actions -->
+                                    <!-- <div class="row mb-5 g-4">
+                                        <div class="col-md-6">
+                                            <div class="card border-0 shadow-lg h-100">
+                                                <div class="card-body p-4 text-center">
+                                                    <div class="mb-3">
+                                                        <i class="fas fa-user-cog fa-3x text-primary"></i>
+                                                    </div>
+                                                    <h5 class="card-title">Cài đặt Admin</h5>
+                                                    <p class="card-text text-muted">Thay đổi thông tin đăng nhập và cài đặt tài khoản</p>
+                                                    <a href="/admin/settings" class="btn btn-primary">
+                                                        <i class="fas fa-cog me-2"></i>Mở cài đặt
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card border-0 shadow-lg h-100">
+                                                <div class="card-body p-4 text-center">
+                                                    <div class="mb-3">
+                                                        <i class="fas fa-file-excel fa-3x text-success"></i>
+                                                    </div>
+                                                    <h5 class="card-title">Xuất báo cáo</h5>
+                                                    <p class="card-text text-muted">Tải xuất file Excel danh sách email đã được sử dụng</p>
+                                                    <button onclick="exportCopiedEmails()" class="btn btn-success">
+                                                        <i class="fas fa-download me-2"></i>Xuất Excel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> -->
+
                                     <!-- Add Email Form -->
                                     <div class="card mb-5 border-0 shadow-lg">
                                         <div class="card-header py-4" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
@@ -366,9 +410,14 @@
                                                 </h4>
                                                 <small class="text-white-75">Quản lý tất cả email trong hệ thống</small>
                                             </div>
-                                            <button class="btn btn-outline-light btn-sm shadow" onclick="location.reload()">
-                                                <i class="fas fa-sync-alt me-1"></i>Làm mới
-                                            </button>
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-outline-light btn-sm shadow" onclick="exportCopiedEmails()">
+                                                    <i class="fas fa-file-excel me-1"></i>Xuất Excel
+                                                </button>
+                                                <button class="btn btn-outline-light btn-sm shadow" onclick="location.reload()">
+                                                    <i class="fas fa-sync-alt me-1"></i>Làm mới
+                                                </button>
+                                            </div>
                                         </div>
                                         <div class="card-body p-0">
                                             <% if (message) { %>
@@ -691,6 +740,44 @@
             } catch (error) {
                 console.error('Error:', error);
                 showAlert('danger', 'Có lỗi xảy ra khi reset email');
+            }
+        }
+
+        // Export copied emails to Excel
+        async function exportCopiedEmails() {
+            try {
+                showAlert('info', 'Đang chuẩn bị file Excel...');
+                
+                const response = await fetch('/admin/export-copied-emails');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    // This is an error response
+                    const result = await response.json();
+                    showAlert('warning', result.message || 'Có lỗi xảy ra khi xuất file');
+                    return;
+                }
+                
+                // This is a file download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `copied-emails-${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showAlert('success', '🎉 File Excel đã được tải xuống thành công!');
+            } catch (error) {
+                console.error('Error exporting Excel file:', error);
+                showAlert('danger', 'Có lỗi xảy ra khi xuất file Excel: ' + error.message);
             }
         }
 

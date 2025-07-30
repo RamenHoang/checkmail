@@ -11,13 +11,22 @@ Hệ thống đơn giản giúp quản lý danh sách email và đảm bảo m�
 - Không preload danh sách email → bảo mật tránh bị scrape
 
 ### 🛠️ Trang Quản Trị (`/admin`)
-- Hiển thị danh sách tất cả email
-- Thông tin gồm: ID, email, trạng thái, thời gian copy, IP copy
+- **Yêu cầu đăng nhập**: Chỉ admin được phép truy cập
+- Hiển thị danh sách tất cả email với UUID bảo mật
+- Thông tin gồm: UUID, email (masked), trạng thái, thời gian copy, IP copy
 - Chức năng quản lý:
   - ➕ Thêm email mới
   - 🗑️ Xóa email
   - 🔄 Reset trạng thái email về "khả dụng"
   - 📊 Thống kê tổng quan
+- **Đăng xuất**: Session-based authentication với logout
+
+### 🔐 Hệ thống Authentication
+- **Login**: `/admin/login` - Form đăng nhập cho admin
+- **Session Management**: Express session với timeout 24h
+- **Menu ẩn**: Menu quản trị chỉ hiển thị khi đã đăng nhập
+- **Route Protection**: Tất cả admin routes được bảo vệ
+- **Demo credentials**: admin/admin123 (thay đổi trong production)
 
 ## 🧱 Kiến trúc hệ thống
 
@@ -90,7 +99,7 @@ npm start
 ### Bảng `emails`
 | Column     | Type     | Description                    |
 |------------|----------|--------------------------------|
-| id         | INTEGER  | Primary key (auto increment)  |
+| id         | TEXT     | Primary key (UUID)             |
 | email      | TEXT     | Email address (unique)         |
 | status     | TEXT     | 'available' hoặc 'used'        |
 | copied_at  | DATETIME | Thời gian copy (null nếu chưa) |
@@ -100,11 +109,14 @@ npm start
 
 ## 🔐 Bảo mật
 
+- **Authentication**: Session-based login cho admin panel
+- **UUID IDs**: Sử dụng UUID thay vì integer để chống scraping
 - **Rate Limiting**: Giới hạn 100 requests/15 phút mỗi IP
-- **No Email Preloading**: Chỉ hiển thị 1 email tại một thời điểm
+- **No Email Preloading**: Chỉ hiển thị email khả dụng theo từng trang
 - **IP Tracking**: Ghi lại IP address khi copy email
 - **Input Validation**: Kiểm tra format email hợp lệ
 - **SQL Injection Protection**: Sử dụng parameterized queries
+- **Auto Migration**: Tự động migrate từ integer ID sang UUID
 
 ## 📝 API Endpoints
 
@@ -113,10 +125,14 @@ npm start
 - `POST /copy` - Đánh dấu email là đã sử dụng
 
 ### Admin Routes
-- `GET /admin` - Hiển thị admin dashboard
-- `POST /admin/add` - Thêm email mới
-- `POST /admin/delete` - Xóa email
-- `POST /admin/reset` - Reset trạng thái email
+
+- `GET /admin/login` - Form đăng nhập admin
+- `POST /admin/login` - Xử lý đăng nhập
+- `POST /admin/logout` - Đăng xuất và destroy session
+- `GET /admin` - Hiển thị admin dashboard (yêu cầu auth)
+- `POST /admin/add` - Thêm email mới (yêu cầu auth)
+- `POST /admin/delete` - Xóa email (yêu cầu auth)
+- `POST /admin/reset` - Reset trạng thái email (yêu cầu auth)
 
 ## 🎨 Giao diện
 

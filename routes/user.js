@@ -23,13 +23,15 @@ router.get('/', async (req, res) => {
   try {
     res.render('index', { 
       title: 'Email Checker',
-      message: null
+      message: null,
+      isAuthenticated: req.session && req.session.isAuthenticated
     });
   } catch (error) {
     console.error('Error rendering homepage:', error);
     res.render('index', { 
       title: 'Email Checker',
-      message: 'Đã xảy ra lỗi khi tải trang'
+      message: 'Đã xảy ra lỗi khi tải trang',
+      isAuthenticated: req.session && req.session.isAuthenticated
     });
   }
 });
@@ -148,7 +150,7 @@ router.post('/copy', async (req, res) => {
       return res.json({ success: false, message: 'Email ID is required' });
     }
 
-    const success = await db.markEmailAsUsed(id, clientIP);
+    const success = await db.markEmailAsUsed(id, clientIP);``
     
     if (success) {
       res.json({ success: true, message: 'Email đã được đánh dấu là đã sử dụng' });

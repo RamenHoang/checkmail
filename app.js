@@ -3,6 +3,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const session = require('express-session');
 const Database = require('./database/database');
 
 const app = express();
@@ -25,6 +26,32 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Session middleware
+app.use(session({
+  secret: 'email-checker-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // Set to true in production with HTTPS
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Authentication middleware
+const requireAuth = (req, res, next) => {
+  if (req.session && req.session.isAuthenticated) {
+    return next();
+  } else {
+    return res.redirect('/admin/login');
+  }
+};
+
+// Make auth status available to all views
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.session && req.session.isAuthenticated;
+  next();
+});
+
 // Set view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -34,7 +61,7 @@ const userRoutes = require('./routes/user');
 const adminRoutes = require('./routes/admin');
 
 app.use('/', userRoutes);
-app.use('/admin', adminRoutes);
+app.use('/admin', adminRoutes(requireAuth)); // Pass auth middleware to admin routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -20,6 +20,10 @@ const sampleEmails = [
     'random2@email.com'
 ];
 
+const sampleAdminUsers = [
+    { username: 'admin', password: 'admin123' },
+];
+
 async function seedDatabase() {
     console.log('🌱 Seeding Email Checker Database...');
     
@@ -28,6 +32,26 @@ async function seedDatabase() {
     try {
         await db.init();
         
+        console.log('\n👤 Seeding Admin Users...');
+        let adminAddedCount = 0;
+        let adminSkippedCount = 0;
+        
+        for (const adminUser of sampleAdminUsers) {
+            try {
+                await db.addAdminUser(adminUser.username, adminUser.password);
+                adminAddedCount++;
+                console.log(`✅ Added admin: ${adminUser.username}`);
+            } catch (error) {
+                if (error.code === 'SQLITE_CONSTRAINT') {
+                    adminSkippedCount++;
+                    console.log(`⏭️  Skipped admin (exists): ${adminUser.username}`);
+                } else {
+                    console.error(`❌ Error adding admin ${adminUser.username}:`, error.message);
+                }
+            }
+        }
+        
+        console.log('\n📧 Seeding Emails...');
         let addedCount = 0;
         let skippedCount = 0;
         
@@ -47,9 +71,9 @@ async function seedDatabase() {
         }
         
         console.log('\n📊 Seeding Summary:');
-        console.log(`✅ Added: ${addedCount} emails`);
-        console.log(`⏭️  Skipped: ${skippedCount} emails`);
-        console.log(`📧 Total processed: ${sampleEmails.length} emails`);
+        console.log(`👤 Admin Users - Added: ${adminAddedCount}, Skipped: ${adminSkippedCount}`);
+        console.log(`📧 Emails - Added: ${addedCount}, Skipped: ${skippedCount}`);
+        console.log(`� Total processed: ${sampleAdminUsers.length} admins, ${sampleEmails.length} emails`);
         
         // Show current stats
         const stats = await db.getStats();
@@ -59,7 +83,16 @@ async function seedDatabase() {
         console.log(`Used: ${stats.used}`);
         
         console.log('\n🚀 Database seeded successfully!');
-        console.log('You can now start the application with: npm start');
+        
+        if (adminAddedCount > 0) {
+            console.log('\n🔐 Seeded Admin Credentials:');
+            for (const adminUser of sampleAdminUsers) {
+                console.log(`   Username: ${adminUser.username} | Password: ${adminUser.password}`);
+            }
+            console.log('\n⚠️  SECURITY NOTE: Change these passwords in production!');
+        }
+        
+        console.log('\nYou can now start the application with: npm start');
         
     } catch (error) {
         console.error('❌ Failed to seed database:', error);

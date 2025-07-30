@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 const path = require('path');
 
 class Database {
@@ -62,11 +63,31 @@ class Database {
 
           this.db.run(sql, (createErr) => {
             if (createErr) {
-              console.error('Error creating table:', createErr);
+              console.error('Error creating emails table:', createErr);
               reject(createErr);
             } else {
-              console.log('✅ Database tables created successfully');
-              resolve();
+              // Create admin table
+              const adminSql = `
+                CREATE TABLE IF NOT EXISTS admin_users (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  username TEXT UNIQUE NOT NULL,
+                  password_hash TEXT NOT NULL,
+                  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+              `;
+              
+              this.db.run(adminSql, async (adminErr) => {
+                if (adminErr) {
+                  console.error('Error creating admin table:', adminErr);
+                  reject(adminErr);
+                } else {
+                  // Initialize default admin user if not exists
+                  await this.initializeDefaultAdmin();
+                  console.log('✅ Database tables created successfully');
+                  resolve();
+                }
+              });
             }
           });
         }
@@ -342,6 +363,164 @@ class Database {
           reject(err);
         } else {
           resolve(row);
+        }
+      });
+    });
+  }
+
+  // Initialize default admin user
+  async initializeDefaultAdmin() {
+    return new Promise((resolve, reject) => {
+      // Check if any admin user exists
+      this.db.get('SELECT COUNT(*) as count FROM admin_users', [], async (err, row) => {
+        if (err) {
+          console.error('Error checking admin users:', err);
+          reject(err);
+          return;
+        }
+
+        if (row.count === 0) {
+          // Create default admin user
+          const defaultPassword = 'admin123';
+          const saltRounds = 10;
+          
+          try {
+            const passwordHash = await bcrypt.hash(defaultPassword, saltRounds);
+            
+            this.db.run(
+              'INSERT INTO admin_users (username, password_hash) VALUES (?, ?)',
+              ['admin', passwordHash],
+              (insertErr) => {
+                if (insertErr) {
+                  console.error('Error creating default admin:', insertErr);
+                  reject(insertErr);
+                } else {
+                  console.log('✅ Default admin user created (admin/admin123)');
+                  resolve();
+                }
+              }
+            );
+          } catch (hashErr) {
+            console.error('Error hashing password:', hashErr);
+            reject(hashErr);
+          }
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  // Admin authentication methods
+  async authenticateAdmin(username, password) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        'SELECT id, username, password_hash FROM admin_users WHERE username = ?',
+        [username],
+        async (err, row) => {
+          if (err) {
+            console.error('Database error during authentication:', err);
+            reject(err);
+            return;
+          }
+
+          if (!row) {
+            resolve(false); // User not found
+            return;
+          }
+
+          try {
+            const isValid = await bcrypt.compare(password, row.password_hash);
+            resolve(isValid ? { id: row.id, username: row.username } : false);
+          } catch (compareErr) {
+            console.error('Error comparing passwords:', compareErr);
+            reject(compareErr);
+          }
+        }
+      );
+    });
+  }
+
+  // Change admin credentials
+  async changeAdminCredentials(currentUsername, newUsername, newPassword) {
+    return new Promise((resolve, reject) => {
+      const saltRounds = 10;
+      
+      bcrypt.hash(newPassword, saltRounds, (hashErr, passwordHash) => {
+        if (hashErr) {
+          console.error('Error hashing new password:', hashErr);
+          reject(hashErr);
+          return;
+        }
+
+        this.db.run(
+          `UPDATE admin_users 
+           SET username = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP 
+           WHERE username = ?`,
+          [newUsername, passwordHash, currentUsername],
+          function(updateErr) {
+            if (updateErr) {
+              console.error('Error updating admin credentials:', updateErr);
+              reject(updateErr);
+            } else if (this.changes === 0) {
+              resolve(false); // No rows updated
+            } else {
+              console.log('✅ Admin credentials updated successfully');
+              resolve(true);
+            }
+          }
+        );
+      });
+    });
+  }
+
+  // Add admin user for seeding
+  async addAdminUser(username, password) {
+    return new Promise((resolve, reject) => {
+      const saltRounds = 10;
+      
+      bcrypt.hash(password, saltRounds, (hashErr, passwordHash) => {
+        if (hashErr) {
+          console.error('Error hashing password for admin user:', hashErr);
+          reject(hashErr);
+          return;
+        }
+
+        this.db.run(
+          'INSERT INTO admin_users (username, password_hash) VALUES (?, ?)',
+          [username, passwordHash],
+          function(insertErr) {
+            if (insertErr) {
+              reject(insertErr);
+            } else {
+              resolve(this.lastID);
+            }
+          }
+        );
+      });
+    });
+  }
+
+  // Get copied emails for export
+  async getCopiedEmails() {
+    return new Promise((resolve, reject) => {
+      const sql = `
+        SELECT 
+          email,
+          copied_at,
+          copied_ip,
+          created_at
+        FROM emails 
+        WHERE status = 'used' AND copied_at IS NOT NULL
+        ORDER BY copied_at DESC
+      `;
+      
+      this.db.all(sql, [], (err, rows) => {
+        if (err) {
+          console.error('Error fetching copied emails:', err);
+          reject(err);
+        } else {
+          resolve(rows);
         }
       });
     });
