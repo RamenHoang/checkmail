@@ -8,6 +8,7 @@ const Database = require('./database/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.set('trust proxy', true); // Important to get real client IP
 
 // Initialize database
 const db = new Database();
