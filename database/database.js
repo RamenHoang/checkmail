@@ -526,6 +526,106 @@ class Database {
     });
   }
 
+  // Batch import emails from array
+  async batchImportEmails(emailArray) {
+    const results = {
+      success: 0,
+      failed: 0,
+      duplicates: 0,
+      errors: []
+    };
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Start transaction
+        this.db.run('BEGIN TRANSACTION');
+
+        for (let i = 0; i < emailArray.length; i++) {
+          const email = emailArray[i];
+          
+          try {
+            // Basic email validation
+            if (!email || typeof email !== 'string') {
+              results.failed++;
+              results.errors.push(`Row ${i + 1}: Email không đúng định dạng - ${email}`);
+              continue;
+            }
+
+            const emailTrimmed = email.trim().toLowerCase();
+            
+            // Email format validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(emailTrimmed)) {
+              results.failed++;
+              results.errors.push(`Row ${i + 1}: Email không đúng định dạng - ${email}`);
+              continue;
+            }
+
+            // Check if email already exists
+            const existingEmail = await new Promise((resolve, reject) => {
+              this.db.get('SELECT id FROM emails WHERE email = ?', [emailTrimmed], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+              });
+            });
+
+            if (existingEmail) {
+              results.duplicates++;
+              results.errors.push(`Row ${i + 1}: Email đã tồn tại - ${email}`);
+              continue;
+            }
+
+            // Generate UUID and extract domain
+            const emailId = this.generateUUID();
+
+            // Insert email
+            await new Promise((resolve, reject) => {
+              this.db.run(`
+                INSERT INTO emails (id, email, status)
+                VALUES (?, ?, 'available')
+              `, [emailId, emailTrimmed], function(err) {
+                if (err) reject(err);
+                else resolve(this.lastID);
+              });
+            });
+
+            results.success++;
+          } catch (error) {
+            results.failed++;
+            results.errors.push(`Row ${i + 1}: ${error.message} - ${email}`);
+          }
+        }
+
+        // Commit transaction
+        this.db.run('COMMIT', (err) => {
+          if (err) {
+            this.db.run('ROLLBACK');
+            reject(err);
+          } else {
+            resolve({
+              success: true,
+              results: results
+            });
+          }
+        });
+      } catch (error) {
+        // Rollback transaction on error
+        this.db.run('ROLLBACK');
+        console.error('Batch import error:', error);
+        resolve({
+          success: false,
+          error: error.message,
+          results: results
+        });
+      }
+    });
+  }
+
+  // Generate UUID for email IDs
+  generateUUID() {
+    return crypto.randomUUID();
+  }
+
   close() {
     if (this.db) {
       this.db.close((err) => {

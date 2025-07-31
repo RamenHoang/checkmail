@@ -4,14 +4,38 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const session = require('express-session');
+const multer = require('multer');
 const Database = require('./database/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.set('trust proxy', true); // Important to get real client IP
+app.set('trust proxy', 1); // Trust first proxy only - more secure for rate limiting
 
 // Initialize database
 const db = new Database();
+
+// Configure multer for file uploads
+const storage = multer.memoryStorage(); // Store file in memory
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Check file extension
+    const allowedExtensions = ['.xlsx', '.xls'];
+    const fileExtension = path.extname(file.originalname).toLowerCase();
+    
+    if (allowedExtensions.includes(fileExtension)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only .xlsx and .xls files are allowed'), false);
+    }
+  }
+});
+
+// Make upload middleware available to routes
+app.locals.upload = upload;
 
 // Rate limiting
 const limiter = rateLimit({
@@ -62,7 +86,7 @@ const userRoutes = require('./routes/user');
 const adminRoutes = require('./routes/admin');
 
 app.use('/', userRoutes);
-app.use('/admin', adminRoutes(requireAuth)); // Pass auth middleware to admin routes
+app.use('/admin', adminRoutes(requireAuth, upload)); // Pass auth middleware and upload middleware to admin routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {

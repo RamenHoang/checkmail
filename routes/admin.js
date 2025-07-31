@@ -2,8 +2,8 @@ const express = require('express');
 const Database = require('../database/database');
 const XLSX = require('xlsx');
 
-// Export a function that takes the auth middleware
-module.exports = function(requireAuth) {
+// Export a function that takes the auth middleware and upload middleware
+module.exports = function(requireAuth, upload) {
   const router = express.Router();
   const db = new Database();
 
@@ -82,6 +82,30 @@ module.exports = function(requireAuth) {
         emails: [],
         stats: { total: 0, available: 0, used: 0 },
         message: 'Có lỗi xảy ra khi tải dữ liệu'
+      });
+    }
+  });
+
+  // API endpoint to fetch emails and stats (for AJAX refresh)
+  router.get('/api/emails', async (req, res) => {
+    try {
+      const [emails, stats] = await Promise.all([
+        db.getAllEmails(),
+        db.getStats()
+      ]);
+
+      res.json({
+        success: true,
+        emails: emails,
+        stats: stats
+      });
+    } catch (error) {
+      console.error('Error fetching emails via API:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Có lỗi xảy ra khi tải dữ liệu',
+        emails: [],
+        stats: { total: 0, available: 0, used: 0 }
       });
     }
   });
@@ -286,6 +310,141 @@ module.exports = function(requireAuth) {
     } catch (error) {
       console.error('Error exporting copied emails:', error);
       res.status(500).json({ success: false, message: 'Có lỗi xảy ra khi xuất file Excel' });
+    }
+  });
+
+  // Download sample template for batch import
+  router.get('/sample-template', requireAuth, async (req, res) => {
+    try {
+      // Create sample data
+      const sampleData = [
+        { 'Email': 'example1@domain.com' },
+        { 'Email': 'example2@domain.com' },
+        { 'Email': 'example3@domain.com' },
+        { 'Email': 'user@example.org' },
+        { 'Email': 'test@sample.net' }
+      ];
+
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(sampleData);
+
+      // Set column width
+      worksheet['!cols'] = [{ wch: 30 }]; // Email column width
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Email Template');
+
+      // Generate buffer
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+      // Set response headers for file download
+      const filename = `email-import-template.xlsx`;
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Length', buffer.length);
+
+      // Send the file
+      res.send(buffer);
+    } catch (error) {
+      console.error('Error generating sample template:', error);
+      res.status(500).json({ success: false, message: 'Có lỗi xảy ra khi tạo file mẫu' });
+    }
+  });
+
+  // Import emails from Excel file
+  router.post('/import', requireAuth, upload.single('emailFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, message: 'Vui lòng chọn file Excel để import' });
+      }
+
+      // Parse Excel file
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet);
+
+      if (!data.length) {
+        return res.status(400).json({ success: false, message: 'File Excel không có dữ liệu' });
+      }
+
+      // Extract emails from the data
+      const emails = [];
+      const errors = [];
+
+      data.forEach((row, index) => {
+        const rowNumber = index + 2; // Excel rows start at 2 (after header)
+        
+        // Look for email in various possible column names
+        const email = row['Email'] || row['email'] || row['EMAIL'] || 
+                     row['E-mail'] || row['e-mail'] || row['E-MAIL'];
+
+        if (!email) {
+          errors.push(`Dòng ${rowNumber}: Không tìm thấy email`);
+        } else if (typeof email === 'string' && email.trim()) {
+          emails.push(email.trim());
+        } else {
+          errors.push(`Dòng ${rowNumber}: Email không hợp lệ`);
+        }
+      });
+
+      if (emails.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Không tìm thấy email hợp lệ nào trong file',
+          errors: errors
+        });
+      }
+
+      // Import emails using batch import
+      const result = await db.batchImportEmails(emails);
+
+      console.log('Import result:', result);
+
+      // Ensure result has the expected structure
+      const safeResult = {
+        successful: result.results.success || 0,
+        failed: result.results.failed || 0,
+        duplicates: result.results.duplicates || 0,
+        errors: result.results.errors || []
+      };
+
+      // Prepare response
+      const response = {
+        success: true,
+        message: `Import thành công ${safeResult.successful} email${safeResult.successful > 1 ? 's' : ''}`,
+        details: {
+          total: emails.length,
+          successful: safeResult.successful,
+          failed: safeResult.failed,
+          duplicates: safeResult.duplicates,
+          errors: safeResult.errors.length
+        }
+      };
+
+      // Add details about errors if any
+      if (safeResult.errors.length > 0) {
+        response.importErrors = safeResult.errors.slice(0, 10); // Show first 10 errors
+        if (safeResult.errors.length > 10) {
+          response.message += ` (${safeResult.errors.length - 10} lỗi khác...)`;
+        }
+      }
+
+      // Add file parsing errors if any
+      if (errors.length > 0) {
+        response.fileErrors = errors.slice(0, 10);
+      }
+
+      res.json(response);
+
+    } catch (error) {
+      console.error('Error importing emails:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Có lỗi xảy ra khi import email', 
+        error: error.message 
+      });
     }
   });
 

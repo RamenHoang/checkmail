@@ -239,7 +239,7 @@
                             </form>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="location.reload()">
+                            <a class="nav-link" href="#" onclick="refreshEmailList(); return false;">
                                 <i class="fas fa-refresh me-2"></i>Làm mới
                             </a>
                         </li>
@@ -401,6 +401,61 @@
                                         </div>
                                     </div>
 
+                                    <!-- Batch Import Section -->
+                                    <div class="card mb-5 border-0 shadow-lg">
+                                        <div class="card-header py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                            <h4 class="mb-0 text-white fw-600">
+                                                <i class="fas fa-file-import me-2"></i>Import Email Hàng Loạt
+                                            </h4>
+                                        </div>
+                                        <div class="card-body p-4">
+                                            <div class="row g-4">
+                                                <!-- Sample Download -->
+                                                <div class="col-md-6">
+                                                    <div class="text-center p-4 border border-2 border-dashed border-primary rounded-3">
+                                                        <i class="fas fa-download fa-3x text-primary mb-3"></i>
+                                                        <h5 class="text-primary">Tải file mẫu</h5>
+                                                        <p class="text-muted mb-3">Tải xuống file Excel mẫu để import email</p>
+                                                        <button onclick="downloadSampleTemplate()" class="btn btn-outline-primary">
+                                                            <i class="fas fa-file-download me-2"></i>Tải file mẫu .xlsx
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- File Upload -->
+                                                <div class="col-md-6">
+                                                    <div class="text-center p-4 border border-2 border-dashed border-success rounded-3">
+                                                        <i class="fas fa-upload fa-3x text-success mb-3"></i>
+                                                        <h5 class="text-success">Import file Excel</h5>
+                                                        <p class="text-muted mb-3">Chọn file Excel để import email hàng loạt</p>
+                                                        <form id="importForm" enctype="multipart/form-data">
+                                                            <div class="mb-3">
+                                                                <input type="file" class="form-control" id="emailFile" name="emailFile" accept=".xlsx,.xls" required>
+                                                            </div>
+                                                            <button type="submit" class="btn btn-success">
+                                                                <i class="fas fa-file-import me-2"></i>Import Email
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Import Instructions -->
+                                            <div class="alert alert-info mt-4">
+                                                <h6 class="alert-heading">
+                                                    <i class="fas fa-info-circle me-2"></i>Hướng dẫn import
+                                                </h6>
+                                                <ul class="mb-0">
+                                                    <li>File Excel phải có cột "Email" chứa địa chỉ email</li>
+                                                    <li>Hỗ trợ các định dạng: .xlsx, .xls</li>
+                                                    <li>Email trùng lặp sẽ được bỏ qua tự động</li>
+                                                    <li>Email không hợp lệ sẽ được báo lỗi chi tiết</li>
+                                                    <li>Tối đa 5MB mỗi file</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <!-- Email List -->
                                     <div class="card border-0 shadow-lg">
                                         <div class="card-header d-flex justify-content-between align-items-center py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
@@ -414,7 +469,7 @@
                                                 <button class="btn btn-outline-light btn-sm shadow" onclick="exportCopiedEmails()">
                                                     <i class="fas fa-file-excel me-1"></i>Xuất Excel
                                                 </button>
-                                                <button class="btn btn-outline-light btn-sm shadow" onclick="location.reload()">
+                                                <button class="btn btn-outline-light btn-sm shadow" onclick="refreshEmailList()">
                                                     <i class="fas fa-sync-alt me-1"></i>Làm mới
                                                 </button>
                                             </div>
@@ -675,7 +730,7 @@
                 if (result.success) {
                     showAlert('success', result.message);
                     emailInput.value = '';
-                    setTimeout(() => location.reload(), 1500);
+                    refreshEmailList();
                 } else {
                     showAlert('danger', result.message);
                 }
@@ -704,7 +759,7 @@
                 
                 if (result.success) {
                     showAlert('success', result.message);
-                    setTimeout(() => location.reload(), 1500);
+                    refreshEmailList();
                 } else {
                     showAlert('danger', result.message);
                 }
@@ -733,7 +788,7 @@
                 
                 if (result.success) {
                     showAlert('success', result.message);
-                    setTimeout(() => location.reload(), 1500);
+                    refreshEmailList();
                 } else {
                     showAlert('danger', result.message);
                 }
@@ -779,6 +834,273 @@
                 console.error('Error exporting Excel file:', error);
                 showAlert('danger', 'Có lỗi xảy ra khi xuất file Excel: ' + error.message);
             }
+        }
+
+        // Download sample template for import
+        async function downloadSampleTemplate() {
+            try {
+                showAlert('info', 'Đang tạo file mẫu...');
+                
+                const response = await fetch('/admin/sample-template');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const result = await response.json();
+                    showAlert('warning', result.message || 'Có lỗi xảy ra khi tạo file mẫu');
+                    return;
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'email-import-template.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showAlert('success', '📥 File mẫu đã được tải xuống thành công!');
+            } catch (error) {
+                console.error('Error downloading sample template:', error);
+                showAlert('danger', 'Có lỗi xảy ra khi tải file mẫu: ' + error.message);
+            }
+        }
+
+        // Handle import form submission
+        document.getElementById('importForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('emailFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showAlert('warning', 'Vui lòng chọn file Excel để import');
+                return;
+            }
+            
+            // Validate file type
+            const allowedTypes = [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+                'application/vnd.ms-excel' // .xls
+            ];
+            
+            if (!allowedTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls)$/i)) {
+                showAlert('warning', 'Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+                return;
+            }
+            
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showAlert('warning', 'File quá lớn. Vui lòng chọn file nhỏ hơn 5MB');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('emailFile', file);
+            
+            try {
+                showAlert('info', 'Đang xử lý file Excel...');
+                
+                const response = await fetch('/admin/import', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Success message with details
+                    let message = result.message;
+                    
+                    if (result.details) {
+                        message += `\n📊 Chi tiết:`;
+                        message += `\n• Tổng số: ${result.details.total}`;
+                        message += `\n• Thành công: ${result.details.successful}`;
+                        if (result.details.failed > 0) {
+                            message += `\n• Thất bại: ${result.details.failed}`;
+                        }
+                        if (result.details.duplicates > 0) {
+                            message += `\n• Trùng lặp: ${result.details.duplicates}`;
+                        }
+                        if (result.details.errors > 0) {
+                            message += `\n• Lỗi: ${result.details.errors}`;
+                        }
+                    }
+                    
+                    showAlert('success', '🎉 ' + message);
+                    
+                    // Show additional details if available
+                    if (result.importErrors && result.importErrors.length > 0) {
+                        console.log('Import errors:', result.importErrors);
+                    }
+                    
+                    // Reset form and refresh data
+                    fileInput.value = '';
+                    refreshEmailList();
+                } else {
+                    showAlert('danger', result.message || 'Có lỗi xảy ra khi import email');
+                    
+                    // Show file parsing errors if available
+                    if (result.fileErrors && result.fileErrors.length > 0) {
+                        console.log('File parsing errors:', result.fileErrors);
+                    }
+                    if (result.importErrors && result.importErrors.length > 0) {
+                        console.log('Import errors:', result.importErrors);
+                    }
+                }
+            } catch (error) {
+                console.error('Error importing emails:', error);
+                showAlert('danger', 'Có lỗi xảy ra khi import email: ' + error.message);
+            }
+        });
+
+        // Refresh email list and stats via AJAX
+        async function refreshEmailList() {
+            try {
+                const response = await fetch('/admin/api/emails');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateStatsCards(data.stats);
+                    updateEmailTable(data.emails);
+                } else {
+                    console.error('Failed to refresh email list:', data.message);
+                    showAlert('warning', 'Có lỗi khi làm mới danh sách email');
+                }
+            } catch (error) {
+                console.error('Error refreshing email list:', error);
+                showAlert('danger', 'Có lỗi xảy ra khi làm mới dữ liệu');
+            }
+        }
+
+        // Update statistics cards
+        function updateStatsCards(stats) {
+            const totalElement = document.querySelector('.stats-card:nth-child(1) .display-4');
+            const availableElement = document.querySelector('.stats-card:nth-child(2) .display-4');
+            const usedElement = document.querySelector('.stats-card:nth-child(3) .display-4');
+            
+            if (totalElement) totalElement.textContent = stats.total;
+            if (availableElement) availableElement.textContent = stats.available;
+            if (usedElement) usedElement.textContent = stats.used;
+        }
+
+        // Update email table
+        function updateEmailTable(emails) {
+            const tableBody = document.querySelector('.table tbody');
+            const emptyStateDiv = document.querySelector('.text-center.py-5');
+            
+            if (emails.length === 0) {
+                // Show empty state
+                if (tableBody) {
+                    tableBody.parentElement.parentElement.style.display = 'none';
+                }
+                if (!emptyStateDiv) {
+                    const cardBody = document.querySelector('.card-body.p-0');
+                    cardBody.innerHTML = `
+                        <div class="text-center py-5 m-4">
+                            <div class="mb-4">
+                                <i class="fas fa-inbox fa-4x text-muted opacity-25"></i>
+                            </div>
+                            <h4 class="text-muted mb-3">Chưa có email nào</h4>
+                            <p class="text-muted mb-4">Hệ thống chưa có email nào. Sử dụng form bên trên để thêm email mới.</p>
+                            <button class="btn btn-primary" onclick="document.getElementById('newEmail').focus()">
+                                <i class="fas fa-plus me-2"></i>Thêm Email Đầu Tiên
+                            </button>
+                        </div>
+                    `;
+                }
+            } else {
+                // Show table with data
+                if (emptyStateDiv) {
+                    emptyStateDiv.remove();
+                }
+                
+                if (tableBody) {
+                    let tableHtml = '';
+                    emails.forEach((email, index) => {
+                        const statusBadge = email.status === 'available' 
+                            ? '<span class="badge bg-success px-3 py-2"><i class="fas fa-check me-1"></i>Khả dụng</span>'
+                            : '<span class="badge bg-danger px-3 py-2"><i class="fas fa-times me-1"></i>Đã dùng</span>';
+                        
+                        const copiedAt = email.copied_at 
+                            ? `<small class="text-muted"><i class="fas fa-clock me-1"></i>${new Date(email.copied_at).toLocaleString('vi-VN')}</small>`
+                            : '<small class="text-muted">-</small>';
+                        
+                        const copiedIp = email.copied_ip 
+                            ? `<code class="text-info">${email.copied_ip}</code>`
+                            : '<small class="text-muted">-</small>';
+                        
+                        const resetButton = email.status === 'used' 
+                            ? `<button class="btn btn-outline-warning reset-btn shadow-sm" data-email-id="${email.id}" title="Reset về trạng thái khả dụng">
+                                 <i class="fas fa-undo"></i>
+                               </button>`
+                            : '';
+                        
+                        tableHtml += `
+                            <tr style="animation: fadeInUp 0.6s ease-out ${index * 0.1}s both;">
+                                <td class="px-4 fw-bold">#${email.id}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-envelope me-2 text-muted"></i>
+                                        <span class="font-monospace">${email.email}</span>
+                                    </div>
+                                </td>
+                                <td>${statusBadge}</td>
+                                <td>${copiedAt}</td>
+                                <td>${copiedIp}</td>
+                                <td>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        ${new Date(email.created_at).toLocaleString('vi-VN')}
+                                    </small>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        ${resetButton}
+                                        <button class="btn btn-outline-danger delete-btn shadow-sm" data-email-id="${email.id}" title="Xóa email">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableBody.innerHTML = tableHtml;
+                    
+                    // Make sure table is visible
+                    const tableContainer = tableBody.closest('.table-responsive');
+                    if (tableContainer) {
+                        tableContainer.style.display = 'block';
+                    }
+                    
+                    // Re-attach event listeners for new buttons
+                    attachButtonEventListeners();
+                }
+            }
+        }
+
+        // Attach event listeners to dynamically created buttons
+        function attachButtonEventListeners() {
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-email-id');
+                    deleteEmail(id);
+                });
+            });
+            
+            document.querySelectorAll('.reset-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-email-id');
+                    resetEmail(id);
+                });
+            });
         }
 
         // Show alert function
