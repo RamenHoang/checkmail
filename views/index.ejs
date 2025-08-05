@@ -495,12 +495,18 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    // Copy to clipboard
-                    await navigator.clipboard.writeText(result.email);
+                    try {
+                        // Try to copy to clipboard
+                        await navigator.clipboard.writeText(result.email);
+                        showAlert('success', '🎉 Email đã được copy vào clipboard và đánh dấu đã sử dụng!');
+                    } catch (clipboardError) {
+                        // Handle clipboard permission error
+                        console.warn('Clipboard permission denied:', clipboardError);
+                        showAlert('warning', '📝 Email đã được hiển thị bên dưới. Vui lòng copy thủ công.');
+                    }
                     
                     // Show success with confetti
                     createConfetti();
-                    showAlert('success', '🎉 Email đã được copy vào clipboard và đánh dấu đã sử dụng!');
                     
                     // Show the email result
                     resultEmail.value = result.email;
@@ -530,11 +536,21 @@
                 await navigator.clipboard.writeText(resultEmail.value);
                 showToast('Email đã được copy vào clipboard!', 'success');
             } catch (error) {
-                console.error('Error copying to clipboard:', error);
-                // Fallback for older browsers
-                resultEmail.select();
-                document.execCommand('copy');
-                showToast('Email đã được copy vào clipboard!', 'success');
+                console.warn('Clipboard API failed:', error);
+                try {
+                    // Try fallback method for older browsers
+                    resultEmail.select();
+                    resultEmail.setSelectionRange(0, 99999); // For mobile devices
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        showToast('Email đã được copy vào clipboard!', 'success');
+                    } else {
+                        throw new Error('Fallback copy failed');
+                    }
+                } catch (fallbackError) {
+                    console.error('Fallback copy failed:', fallbackError);
+                    showToast('Không thể copy. Vui lòng copy thủ công bằng cách chọn và copy.', 'warning');
+                }
             }
         }
 
